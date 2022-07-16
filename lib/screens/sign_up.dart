@@ -4,7 +4,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:waste_management/dashboard/home.dart';
+import 'package:waste_management/dashboard/location.dart';
+
 import 'login.dart';
 
 class SignUp extends StatefulWidget {
@@ -19,7 +20,7 @@ class _SignUpState extends State<SignUp> {
   bool _click = true;
   bool _passwordvisible = true;
   String? username, password, email, password2;
-bool _isloading = false;
+  bool _isloading = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,7 +66,7 @@ bool _isloading = false;
                             username = value;
                           },
                           validator: (String? value) {
-                            if (value == null || value.trim().length == 0) {
+                            if (value == null || value.trim().isEmpty) {
                               return "Field is required!";
                             }
                             return null;
@@ -83,49 +84,49 @@ bool _isloading = false;
                     ),
                   ),
                 ),
-                SizedBox(height: 10),
-                 Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 15,
-                  ),
-                  child: Container(
-                    margin: EdgeInsets.symmetric(vertical: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Email',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 15,
-                          ),
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        TextFormField(
-                          onChanged: (value) {
-                            email = value;
-                          },
-                          validator: (String? value) {
-                            if (value == null || value.trim().length == 0) {
-                              return "Field is required!";
-                            }
-                            return null;
-                          },
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            hintText: 'Enter username',
-                            fillColor: Colors.grey[200],
-                            filled: true,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                // SizedBox(height: 10),
+                // Padding(
+                //   padding: EdgeInsets.symmetric(
+                //     horizontal: 15,
+                //   ),
+                //   child: Container(
+                //     margin: EdgeInsets.symmetric(vertical: 10),
+                //     child: Column(
+                //       crossAxisAlignment: CrossAxisAlignment.start,
+                //       children: [
+                //         Text(
+                //           'Email',
+                //           style: TextStyle(
+                //             color: Colors.black,
+                //             fontSize: 15,
+                //           ),
+                //         ),
+                //         SizedBox(
+                //           height: 10,
+                //         ),
+                //         TextFormField(
+                //           onChanged: (value) {
+                //             email = value;
+                //           },
+                //           validator: (String? value) {
+                //             if (value == null || value.trim().isEmpty) {
+                //               return "Field is required!";
+                //             }
+                //             return null;
+                //           },
+                //           decoration: InputDecoration(
+                //             border: OutlineInputBorder(
+                //               borderRadius: BorderRadius.circular(10),
+                //             ),
+                //             hintText: 'Enter username',
+                //             fillColor: Colors.grey[200],
+                //             filled: true,
+                //           ),
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                // ),
                 SizedBox(height: 10),
                 Padding(
                   padding: EdgeInsets.symmetric(
@@ -152,7 +153,7 @@ bool _isloading = false;
                             password = value;
                           },
                           validator: (String? value) {
-                            if (value == null || value.trim().length == 0) {
+                            if (value == null || value.trim().isEmpty) {
                               return "Field is required!";
                             }
                             return null;
@@ -184,7 +185,7 @@ bool _isloading = false;
                     ),
                   ),
                 ),
-                 SizedBox(height: 10),
+                SizedBox(height: 10),
                 Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: 15,
@@ -210,7 +211,7 @@ bool _isloading = false;
                             password2 = value;
                           },
                           validator: (String? value) {
-                            if (value == null || value.trim().length == 0) {
+                            if (value == null || value.trim().isEmpty) {
                               return "Field is required!";
                             }
                             return null;
@@ -247,59 +248,71 @@ bool _isloading = false;
                   padding: EdgeInsets.symmetric(
                     horizontal: 15,
                   ),
-                  child: Container(
-                    margin: EdgeInsets.symmetric(vertical: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 500,
-                          height: 55,
-                          decoration: BoxDecoration(
-                            color: Color.fromRGBO(27, 51, 51, 1),
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(10),
-                            ),
-                          ),
-                          child: GestureDetector(
-                            onTap: ()async {
-                              if (_formkey.currentState != null &&
-                                  _formkey.currentState!.validate()){
+                  child: GestureDetector(
+                    onTap: () async {
+                      if (_formkey.currentState != null && _formkey.currentState!.validate()) {
+                        final usernameData = await signUp(
+                            username: username,
+                            email: email,
+                            password1: password,
+                            password2: password2);
+                        if (usernameData == null) {
+                          final snackBar = SnackBar(
+                            content: const Text('Registration failed!'),
+                            backgroundColor: Colors.red,
+                          );
 
-                                 final usernameData=await signUp(username: username, email:email, password1:password, password2
-                                 : password2);
-                              if (usernameData==null)return;
-                                Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                    builder: (context) => GetLocation(username:usernameData),
-                                  ),
-                                   );
-                            }},
-                            child: Center(
-                              child: _isloading?CircularProgressIndicator(): Text(
-                                'Sign up',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
+                          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                          return;
+                        }
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MyLocation(username: usernameData),
+                          ),
+                        );
+                      }
+                    },
+                    child: Container(
+                      margin: EdgeInsets.symmetric(vertical: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 500,
+                            height: 55,
+                            decoration: BoxDecoration(
+                              color: Color.fromRGBO(27, 51, 51, 1),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(10),
                               ),
                             ),
+                            child: Center(
+                              child: _isloading
+                                  ? CircularProgressIndicator()
+                                  : Text(
+                                      'Sign up',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                      ),
+                                    ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 SizedBox(height: 10),
                 GestureDetector(
                   onTap: () {
-                    Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Login(),
-                        ),
-                        (route) => false);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Login(),
+                      ),
+                    );
                   },
                   child: Column(
                     children: [
@@ -329,39 +342,38 @@ bool _isloading = false;
       ),
     );
   }
-  Future<String?> signUp ({String? username,String? email, String? password1, String? password2})async{
-   var url = Uri.parse('https://shrouded-cove-67243.herokuapp.com/dj-rest-auth/registration/');
+
+  Future<String?> signUp(
+      {String? username, String? email, String? password1, String? password2}) async {
+    var url = Uri.parse('https://shrouded-cove-67243.herokuapp.com/dj-rest-auth/registration/');
     //var url = 'https://shrouded-cove-67243.herokuapp.com/dj-rest-auth/registration/';
     setState(() {
-      _isloading=true;
-      
+      _isloading = true;
     });
     try {
-    var response = await http.post(url, headers: {'Content-Type': 'application/json'}, body:jsonEncode( {
-    "username": "$username",
-    //"email": "$email",
-    "password1": "$password1",
-    "password2": "$password2"
-}));
-setState(() {
-  _isloading=false;
-});
-print(response.statusCode);
-if ( response.statusCode ==201){
-  final data=jsonDecode(response.body);
-  return data['user']['username'];
-}return null;
-
-
-     
+      var response = await http.post(url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            "username": "$username",
+            //"email": "$email",
+            "password1": "$password1",
+            "password2": "$password2"
+          }));
+      setState(() {
+        _isloading = false;
+      });
+      print(response.statusCode);
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return data['user']['username'];
+      }
+      return null;
     } catch (e) {
       setState(() {
-        _isloading=false;
+        _isloading = false;
       });
       print(e);
       return null;
-   
-}
-
+    }
   }
 }

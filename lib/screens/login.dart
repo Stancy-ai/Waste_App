@@ -1,7 +1,9 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, curly_braces_in_flow_control_structures
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
+import 'package:http/http.dart' as http;
 import 'package:waste_management/dashboard/location.dart';
 
 import 'sign_up.dart';
@@ -18,6 +20,8 @@ class _LoginState extends State<Login> {
   bool _click = true;
   bool _passwordvisible = true;
   String? username, password;
+
+  bool _isloading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +68,7 @@ class _LoginState extends State<Login> {
                             username = value;
                           },
                           validator: (String? value) {
-                            if (value == null || value.trim().length == 0) {
+                            if (value == null || value.trim().isEmpty) {
                               return "Field is required!";
                             }
                             return null;
@@ -111,7 +115,7 @@ class _LoginState extends State<Login> {
                             password = value;
                           },
                           validator: (String? value) {
-                            if (value == null || value.trim().length == 0) {
+                            if (value == null || value.trim().isEmpty) {
                               return "Field is required!";
                             }
                             return null;
@@ -158,34 +162,48 @@ class _LoginState extends State<Login> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 500,
-                          height: 55,
-                          decoration: BoxDecoration(
-                            color: Color.fromRGBO(27, 51, 51, 1),
-                            borderRadius: BorderRadius.all(
-                              Radius.circular(10),
-                            ),
-                          ),
-                          child: GestureDetector(
-                            onTap: () {
-                              // if (_formkey.currentState != null &&
-                              //     _formkey.currentState!.validate())
-                                Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => MyLocation(),
-                                    ),
-                                    (route) => false);
-                            },
-                            child: Center(
-                              child: Text(
-                                'Login',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
+                        GestureDetector(
+                          onTap: () async {
+                            if (_formkey.currentState != null &&
+                                _formkey.currentState!.validate()) {
+                              final usernameData =
+                                  await signIn(username: username, password: password);
+                              if (usernameData == null) {
+                                final snackBar = SnackBar(
+                                  content: const Text('Username or password does not exist!'),
+                                  backgroundColor: Colors.red,
+                                );
+
+                                ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                return;
+                              }
+                              Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MyLocation(username: usernameData,),
+                                  ),
+                                  (route) => false);
+                            }
+                          },
+                          child: Container(
+                            width: 500,
+                            height: 55,
+                            decoration: BoxDecoration(
+                              color: Color.fromRGBO(27, 51, 51, 1),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(10),
                               ),
+                            ),
+                            child: Center(
+                              child: _isloading
+                                  ? CircularProgressIndicator()
+                                  : Text(
+                                      'Login',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                      ),
+                                    ),
                             ),
                           ),
                         ),
@@ -261,5 +279,35 @@ class _LoginState extends State<Login> {
         ),
       ),
     );
+  }
+
+  Future<String?> signIn({
+    String? username,
+    String? password,
+  }) async {
+    var url = Uri.parse('https://shrouded-cove-67243.herokuapp.com/dj-rest-auth/login/');
+    //var url = 'https://shrouded-cove-67243.herokuapp.com/dj-rest-auth/registration/';
+    setState(() {
+      _isloading = true;
+    });
+    try {
+      var response = await http.post(url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({"username": "$username", "password": "$password"}));
+      setState(() {
+        _isloading = false;
+      });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['user']['username'];
+      }
+      return null;
+    } catch (e) {
+      setState(() {
+        _isloading = false;
+      });
+      print(e);
+      return null;
+    }
   }
 }
